@@ -55,6 +55,7 @@ Cross-platform package manager wrapper
 usage: $(basename "$0") OPTION [--cask] [PACKAGE]
 
    SINGLE PACKAGE ACTIONS
+   (a)bout   : info about package
    (i)nstall : install a given package
    (r)emove  : remove a given package
    (p)urge   : remove a given package and any related config files
@@ -188,6 +189,7 @@ pacman_num_pkgs() {
 # Void Linux
 #
 
+xbps_about()   { sudo xbps-query -R "$@"; }
 xbps_install() { sudo xbps-install "$@"; }
 xbps_update()  { sudo xbps-install -Su; }
 xbps_remove()  { sudo xbps-remove -R "$@"; }
