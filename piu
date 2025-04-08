@@ -202,7 +202,7 @@ apt_list_files() {
 	fi
 }
 apt_manual()  { sudo dpkg -i "$@"; }
-apt_repo_age() { stat -c '%Y' '/var/cache/apt/pkgcache.bin'; }
+apt_repo_age() { find /var/lib/apt/lists -type f -print0 2>/dev/null | xargs -0 stat -c %Y | sort | tail -1; }
 apt_repo_update() {
 	if ! sudo -n apt update &> /dev/null; then
 		echo 'out-of-date'
