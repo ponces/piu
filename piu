@@ -5,6 +5,8 @@
 #Copyright (c) 2017-2023 BeyondMeh
 #Licensed under the ISC license.
 
+[ "$(id -u)" -ne 0 ] && SUDO="sudo" || SUDO=""
+
 __piutmp() {
 	# Piu Temp Directory Manager
 	case ${1} in
@@ -98,10 +100,10 @@ not_implemented() { echo "'${FUNCNAME[1]}' not implemented yet!" && exit 1; }
 # WONTFIX:
 # piu depends on bash, which isn't in the base install of Alpine.
 # Without it, the following error occurs: "-ash: piu: not found"
-apk_install() { sudo apk add "$@"; }
-apk_update()  { sudo apk upgrade; }
-apk_remove()  { sudo apk del "$@"; }
-apk_purge()   { sudo apk del "$@" && sudo apk cache clean; }
+apk_install() { $SUDO apk add "$@"; }
+apk_update()  { $SUDO apk upgrade; }
+apk_remove()  { $SUDO apk del "$@"; }
+apk_purge()   { $SUDO apk del "$@" && $SUDO apk cache clean; }
 apk_search()  { apk search -v "$@"; }
 apk_list()    { apk info; }
 apk_list_files() {
@@ -110,10 +112,10 @@ apk_list_files() {
 	# with `joe` and`nano`; apk will fail silently with $? as a success.
 	apk info -L "$@"
 }
-apk_manual()  { sudo apk add --allow-untrusted "$@"; }
+apk_manual()  { $SUDO apk add --allow-untrusted "$@"; }
 apk_repo_age() { find /var/cache/apk -type f -print0 | xargs -0 stat -c %Z | sort | tail -1; }
 apk_repo_update() {
-	if ! sudo -n apk update &> /dev/null; then
+	if ! $SUDO apk update &> /dev/null; then
 		echo "out-of-date"
 		exit 1
 	fi
@@ -123,10 +125,10 @@ apk_num_pkgs() { apk list | wc -l; }
 #
 # Arch Linux
 #
-pacman_install() { sudo pacman -S "$@"; }
-pacman_update()  { sudo pacman -Su; }
-pacman_remove()  { sudo pacman -Rs "$@"; }
-pacman_purge()   { sudo pacman -Rns "$@"; }
+pacman_install() { $SUDO pacman -S "$@"; }
+pacman_update()  { $SUDO pacman -Su; }
+pacman_remove()  { $SUDO pacman -Rs "$@"; }
+pacman_purge()   { $SUDO pacman -Rns "$@"; }
 pacman_search()  { pacman -Ss "$@"; }
 pacman_list()    { pacman -Qqe; }
 pacman_list_files() {
@@ -142,16 +144,16 @@ pacman_list_files() {
 	# exact filename of the package. Calling `ls` is sloppy
 
 	if ! pacman -Qs "$@" >/dev/null; then
-		sudo pacman -Sw --noconfirm "$@"
+		$SUDO pacman -Sw --noconfirm "$@"
 		pacman -Qlp $(ls /var/cache/pacman/pkg/$@*)
 	else
 		pacman -Ql "$@"
 	fi
 }
-pacman_manual()  { sudo pacman -U "$@"; }
+pacman_manual()  { $SUDO pacman -U "$@"; }
 pacman_repo_age() { stat -c '%Y' '/var/cache/pacman/pkg'; }
 pacman_repo_update() {
-	if ! sudo -n pacman -Sy &> /dev/null; then
+	if ! $SUDO pacman -Sy &> /dev/null; then
 		echo "out-of-date"
 		exit 1
 	fi
@@ -161,10 +163,10 @@ pacman_num_pkgs() { pacman_list | wc -l; }
 #
 # Void Linux
 #
-xbps_install() { sudo xbps-install "$@"; }
-xbps_update()  { sudo xbps-install -Su; }
-xbps_remove()  { sudo xbps-remove -R "$@"; }
-xbps_purge()   { sudo xbps-remove -R "$@" && sudo xbps-remove -Oo; }
+xbps_install() { $SUDO xbps-install "$@"; }
+xbps_update()  { $SUDO xbps-install -Su; }
+xbps_remove()  { $SUDO xbps-remove -R "$@"; }
+xbps_purge()   { $SUDO xbps-remove -R "$@" && $SUDO xbps-remove -Oo; }
 xbps_search()  { xbps-query -Rs "$@"; }
 xbps_list()    { xbps-query -l; }
 xbps_list_files() { xbps-query -Rf "$@"; }
@@ -174,7 +176,7 @@ xbps_manual()  {
 }
 xbps_repo_age() { stat -c '%Y' '/var/db/xbps/https___alpha_de_repo_voidlinux_org_current'; }
 xbps_repo_update() {
-	if ! sudo -n xbps-install -S &> /dev/null; then
+	if ! $SUDO xbps-install -S &> /dev/null; then
 		echo "out-of-date"
 		exit 1
 	fi
@@ -184,10 +186,10 @@ xbps_num_pkgs() { xbps-query -l | wc -l; }
 #
 # Debian / Ubuntu
 #
-apt_install() { sudo apt install "$@"; }
-apt_update()  { sudo apt upgrade; }
-apt_remove()  { sudo apt remove "$@"; }
-apt_purge()   { sudo apt purge "$@"; }
+apt_install() { $SUDO apt install "$@"; }
+apt_update()  { $SUDO apt upgrade; }
+apt_remove()  { $SUDO apt remove "$@"; }
+apt_purge()   { $SUDO apt purge "$@"; }
 apt_search()  { apt search "$@"; }
 apt_list()    { dpkg-query -f '${binary:Package}\n' -W; }
 apt_list_files() {
@@ -201,10 +203,10 @@ apt_list_files() {
 		dpkg -L "$@"
 	fi
 }
-apt_manual()  { sudo dpkg -i "$@"; }
+apt_manual()  { $SUDO dpkg -i "$@"; }
 apt_repo_age() { find /var/lib/apt/lists -type f -print0 2>/dev/null | xargs -0 stat -c %Y | sort | tail -1; }
 apt_repo_update() {
-	if ! sudo -n apt update &> /dev/null; then
+	if ! $SUDO apt update &> /dev/null; then
 		echo 'out-of-date'
 		exit 1
 	fi
@@ -214,18 +216,18 @@ apt_num_pkgs() { apt_list | wc -l; }
 #
 # Red Hat / Fedora
 #
-dnf_install() { sudo dnf install "$@"; }
-dnf_update()  { sudo dnf upgrade; }
-dnf_remove()  { sudo dnf remove -C "$@"; }
+dnf_install() { $SUDO dnf install "$@"; }
+dnf_update()  { $SUDO dnf upgrade; }
+dnf_remove()  { $SUDO dnf remove -C "$@"; }
 dnf_purge()   {
     # yum / dnf remove works just like apt's purge
     # https://unix.stackexchange.com/questions/8191/what-is-fedoras-equivalent-of-apt-get-purge/8193
-    sudo dnf remove "$@"
+    $SUDO dnf remove "$@"
 }
 dnf_search()  { dnf search -C "$@"; }
 dnf_list()    { dnf list installed -C | awk '{if(NR>1)print $1}'; }
 dnf_list_files() { dnf -C repoquery -l "$@"; }
-dnf_manual()  { sudo dnf localinstall "$@"; }
+dnf_manual()  { $SUDO dnf localinstall "$@"; }
 dnf_repo_age() { stat -c '%Y' '/var/cache/dnf/packages.db'; }
 dnf_repo_update() {
 	if ! dnf clean metadata && dnf check-update &> /dev/null; then
@@ -238,17 +240,17 @@ dnf_num_pkgs() { dnf_list | wc -l; }
 #
 # openSUSE
 #
-zypper_install() { sudo zypper in "$@"; }
-zypper_update()  { sudo zypper up; }
-zypper_remove()  { sudo zypper rm -C "$@"; }
-zypper_purge()   { sudo zypper rm -u "$@"; }
+zypper_install() { $SUDO zypper in "$@"; }
+zypper_update()  { $SUDO zypper up; }
+zypper_remove()  { $SUDO zypper rm -C "$@"; }
+zypper_purge()   { $SUDO zypper rm -u "$@"; }
 zypper_search()  { zypper search "$@"; }
 zypper_list()    { zypper search -i | grep ^i | awk '{print $3}'; }
 zypper_list_files() { dnf -C repoquery -l "$@"; }
-zypper_manual()  { sudo zypper in "$@"; }
+zypper_manual()  { $SUDO zypper in "$@"; }
 zypper_repo_age() { stat -c '%Y' '/var/cache/zypp/raw/repo-oss/repodata/repomd.xml'; }
 zypper_repo_update() {
-	if ! sudo zypper ref &> /dev/null; then
+	if ! $SUDO zypper ref &> /dev/null; then
 		echo 'out-of-date'
 		exit 1
 	fi
